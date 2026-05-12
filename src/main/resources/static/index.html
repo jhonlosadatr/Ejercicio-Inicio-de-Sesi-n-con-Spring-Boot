@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuthApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --accent: #7c6aff;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(124,106,255,0.25);
+    --text: #f0eeff;
+    --text-muted: #8b87a8;
+    --text-faint: #4a4760;
+    --success: #34d399;
+    --error: #f87171;
+    --font: 'Sora', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Orb */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(124,106,255,0.12) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { display: none; width: 100%; }
+  .page.active { display: flex; align-items: center; justify-content: center; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* AUTH PAGES */
+  .auth-wrapper {
+    width: 100%;
+    max-width: 420px;
+    padding: 2rem 1rem;
+  }
+
+  .brand {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .brand-icon {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 24px;
+    box-shadow: 0 0 32px var(--accent-glow);
+  }
+
+  .brand h1 {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--text), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .brand p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.4rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 1.75rem;
+    gap: 4px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .form-input::placeholder { color: var(--text-faint); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: var(--font);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1.25rem;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px var(--accent-glow); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .btn-loader {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .alert.error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--error); }
+  .alert.success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: var(--success); }
+
+  /* DASHBOARD */
+  .dashboard {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .navbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-brand {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--text), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .nav-username {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .btn-logout {
+    padding: 0.4rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover { border-color: var(--error); color: var(--error); }
+
+  .dashboard-content {
+    flex: 1;
+    padding: 2.5rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .welcome-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+
+  .welcome-banner::after {
+    content: '✦';
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 5rem;
+    opacity: 0.04;
+    color: var(--accent);
+  }
+
+  .welcome-banner h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .welcome-banner h2 span { color: var(--accent2); }
+
+  .welcome-banner p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .token-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(124,106,255,0.1);
+    border: 1px solid rgba(124,106,255,0.25);
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    margin-top: 0.75rem;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--border-hover); }
+
+  .stat-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .info-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.25rem;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+  }
+
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--text-muted); }
+  .info-val { color: var(--text); font-weight: 500; }
+
+  .chip {
+    padding: 0.2rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--mono);
+    background: rgba(52,211,153,0.1);
+    color: var(--success);
+    border: 1px solid rgba(52,211,153,0.25);
+  }
+
+  .token-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    word-break: break-all;
+    line-height: 1.6;
+    margin-top: 0.5rem;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH PAGE -->
+<div class="page active" id="auth-page">
+  <div class="auth-wrapper">
+    <div class="brand fade-in">
+      <div class="brand-icon">🔐</div>
+      <h1>AuthApp</h1>
+      <p>Sistema de autenticación con JWT</p>
+    </div>
+
+    <div class="card fade-in">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('login')">Iniciar sesión</button>
+        <button class="tab" onclick="switchTab('register')">Registrarse</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="login-email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="login-password" placeholder="••••••••">
+        </div>
+        <button class="btn" id="login-btn" onclick="handleLogin()">
+          <span id="login-text">Entrar</span>
+          <div class="btn-loader" id="login-loader"></div>
+        </button>
+        <div class="alert error" id="login-error"></div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="register-form" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-input" id="reg-firstname" placeholder="Juan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellido</label>
+            <input type="text" class="form-input" id="reg-lastname" placeholder="Pérez">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="reg-email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="reg-password" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label class="form-label">País</label>
+          <input type="text" class="form-input" id="reg-country" placeholder="Colombia">
+        </div>
+        <button class="btn" id="register-btn" onclick="handleRegister()">
+          <span id="register-text">Crear cuenta</span>
+          <div class="btn-loader" id="register-loader"></div>
+        </button>
+        <div class="alert error" id="register-error"></div>
+        <div class="alert success" id="register-success"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="dashboard-page">
+  <div class="dashboard">
+    <nav class="navbar">
+      <span class="nav-brand">⬡ AuthApp</span>
+      <div class="nav-user">
+        <div class="avatar" id="dash-avatar">JD</div>
+        <span class="nav-username" id="dash-nav-name">usuario</span>
+        <button class="btn-logout" onclick="handleLogout()">Salir</button>
+      </div>
+    </nav>
+
+    <div class="dashboard-content fade-in">
+      <div class="welcome-banner">
+        <h2>Hola, <span id="dash-name">Usuario</span> 👋</h2>
+        <p>Sesión activa — autenticado con JWT</p>
+        <div class="token-badge">
+          <div class="dot"></div>
+          Token activo
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🛡️</div>
+          <div class="stat-value">JWT</div>
+          <div class="stat-label">Método de auth</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value">24h</div>
+          <div class="stat-label">Expiración del token</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔒</div>
+          <div class="stat-value">HS256</div>
+          <div class="stat-label">Algoritmo de firma</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3>Información de sesión</h3>
+        <div class="info-row">
+          <span class="info-key">Email</span>
+          <span class="info-val" id="dash-email">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">País</span>
+          <span class="info-val" id="dash-country">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Rol</span>
+          <span class="info-val"><span class="chip">USER</span></span>
+        </div>
+        <div class="info-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+          <span class="info-key">Token JWT</span>
+          <div class="token-box" id="dash-token">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';
+  let currentTab = 'login';
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+    hideAlerts();
+  }
+
+  function hideAlerts() {
+    ['login-error','register-error','register-success'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+  }
+
+  function setLoading(btn, loader, text, loading) {
+    document.getElementById(btn).disabled = loading;
+    document.getElementById(loader).style.display = loading ? 'block' : 'none';
+    document.getElementById(text).style.display = loading ? 'none' : 'block';
+  }
+
+  function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) return showAlert('login-error', 'Por favor completa todos los campos.');
+
+    setLoading('login-btn', 'login-loader', 'login-text', true);
+    hideAlerts();
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username: email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('login-error', data.message || 'Credenciales incorrectas.');
+      } else {
+        goToDashboard({ email, token: data.token, country: '—', name: email.split('@')[0] });
+      }
+    } catch (e) {
+      showAlert('login-error', 'No se pudo conectar al servidor. ¿Está corriendo Spring Boot?');
+    } finally {
+      setLoading('login-btn', 'login-loader', 'login-text', false);
+    }
+  }
+
+  async function handleRegister() {
+    const firstName = document.getElementById('reg-firstname').value.trim();
+    const lastName = document.getElementById('reg-lastname').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const country = document.getElementById('reg-country').value.trim();
+
+    if (!firstName || !lastName || !email || !password || !country)
+      return showAlert('register-error', 'Por favor completa todos los campos.');
+
+    setLoading('register-btn', 'register-loader', 'register-text', true);
+    hideAlerts();
+
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username: email, password, firstName, lastName, country })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('register-error', data.message || 'Error al registrar. ¿El email ya existe?');
+      } else {
+        goToDashboard({ email, token: data.token, country, name: firstName });
+      }
+    } catch (e) {
+      showAlert('register-error', 'No se pudo conectar al servidor. ¿Está corriendo Spring Boot?');
+    } finally {
+      setLoading('register-btn', 'register-loader', 'register-text', false);
+    }
+  }
+
+  function goToDashboard({ email, token, country, name }) {
+    document.getElementById('dash-name').textContent = name;
+    document.getElementById('dash-nav-name').textContent = email;
+    document.getElementById('dash-email').textContent = email;
+    document.getElementById('dash-country').textContent = country || '—';
+    document.getElementById('dash-token').textContent = token || '(guardado en cookie)';
+    document.getElementById('dash-avatar').textContent = name.substring(0,2).toUpperCase();
+
+    document.getElementById('auth-page').classList.remove('active');
+    document.getElementById('dashboard-page').classList.add('active');
+  }
+
+  function handleLogout() {
+    document.getElementById('dashboard-page').classList.remove('active');
+    document.getElementById('auth-page').classList.add('active');
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    switchTab('login');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (currentTab === 'login') handleLogin();
+      else handleRegister();
+    }
+  });
+</script>
+</body>
+</html>
